@@ -79,7 +79,7 @@ export default function RegisterPage() {
             <input type="text" required
               value={form.fullName}
               onChange={set('fullName')}
-              placeholder="e.g. Somchai Jaidee"
+              placeholder="ชื่อ-นามสกุล (ภาษาไทย)"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
@@ -90,7 +90,7 @@ export default function RegisterPage() {
             <input type="text" required
               value={form.studentId}
               onChange={set('studentId')}
-              placeholder="e.g. 630510001"
+              placeholder="ID นักศึกษาจริง"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
