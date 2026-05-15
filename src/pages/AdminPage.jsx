@@ -3,8 +3,6 @@ import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/fire
 import { db } from '../lib/firebase'
 import { calculateScore } from '../utils/scoreCalculator'
 
-const ADMIN_EMAILS = import.meta.env.VITE_ADMIN_EMAILS?.split(',') || []
-
 export default function AdminPage({ user }) {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -76,9 +74,7 @@ export default function AdminPage({ user }) {
     if (sortBy !== field) return <span className="text-gray-300 ml-1">↕</span>
     return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
-
-  if (!ADMIN_EMAILS.includes(user.email)) {
-    return <div className="p-8 text-center text-red-500 text-sm">Access denied. Admin only.</div>
+  if (!user) return <div className="p-8 text-center text-red-500 text-sm">Access denied.</div>
   }
 
   if (loading) return (
