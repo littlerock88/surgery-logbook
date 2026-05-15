@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { calculateScore } from '../utils/scoreCalculator'
 
@@ -10,35 +10,60 @@ export default function AdminPage({ user }) {
   const [catalog, setCatalog] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [deleting, setDeleting] = useState(null)
 
   useEffect(() => {
     if (!ADMIN_EMAILS.includes(user.email)) return
-
-    async function load() {
-      const [profilesSnap, logsSnap, catalogSnap] = await Promise.all([
-        getDocs(collection(db, 'student_profiles')),
-        getDocs(collection(db, 'procedure_logs')),
-        getDocs(collection(db, 'procedure_catalog')),
-      ])
-
-      const catalog = catalogSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-      setCatalog(catalog)
-
-      const logs = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-
-      const studentList = profilesSnap.docs.map(d => {
-        const profile = { id: d.id, ...d.data() }
-        const studentLogs = logs.filter(l => l.studentId === d.id)
-        const score = calculateScore(studentLogs, catalog)
-        return { ...profile, ...score, totalLogs: studentLogs.length }
-      })
-
-      studentList.sort((a, b) => a.fullName?.localeCompare(b.fullName, 'th'))
-      setStudents(studentList)
-      setLoading(false)
-    }
-    load()
+    loadData()
   }, [user])
+
+  async function loadData() {
+    const [profilesSnap, logsSnap, catalogSnap] = await Promise.all([
+      getDocs(collection(db, 'student_profiles')),
+      getDocs(collection(db, 'procedure_logs')),
+      getDocs(collection(db, 'procedure_catalog')),
+    ])
+
+    const catalog = catalogSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+    setCatalog(catalog)
+
+    const logs = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+
+    const studentList = profilesSnap.docs.map(d => {
+      const profile = { id: d.id, ...d.data() }
+      const studentLogs = logs.filter(l => l.studentId === d.id)
+      const score = calculateScore(studentLogs, catalog)
+      return { ...profile, ...score, totalLogs: studentLogs.length }
+    })
+
+    studentList.sort((a, b) => a.fullName?.localeCompare(b.fullName, 'th'))
+    setStudents(studentList)
+    setLoading(false)
+  }
+
+  async function handleDelete(student) {
+    const confirm = window.confirm(
+      `ลบ ${student.fullName} (${student.studentId}) ออกจากระบบ?\n\nข้อมูลทั้งหมดจะถูกลบถาวร`
+    )
+    if (!confirm) return
+
+    setDeleting(student.id)
+    try {
+      const logsSnap = await getDocs(query(
+        collection(db, 'procedure_logs'),
+        where('studentId', '==', student.id)
+      ))
+      await Promise.all([
+        ...logsSnap.docs.map(d => deleteDoc(doc(db, 'procedure_logs', d.id))),
+        deleteDoc(doc(db, 'student_profiles', student.id)),
+        deleteDoc(doc(db, 'student_ids', student.studentId)),
+      ])
+      setStudents(prev => prev.filter(s => s.id !== student.id))
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    }
+    setDeleting(null)
+  }
 
   if (!ADMIN_EMAILS.includes(user.email)) {
     return (
@@ -110,6 +135,7 @@ export default function AdminPage({ user }) {
               <th className="text-center px-4 py-3 font-medium">L2.2</th>
               <th className="text-center px-4 py-3 font-medium">L5</th>
               <th className="text-center px-4 py-3 font-medium">Status</th>
+              <th className="text-center px-4 py-3 font-medium">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -126,18 +152,10 @@ export default function AdminPage({ user }) {
                     {s.score}/10
                   </span>
                 </td>
-                <td className="px-4 py-3 text-center">
-                  {s.level1.complete ? '✅' : '❌'}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {s.level21.complete ? '✅' : '❌'}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {s.level22.complete ? '✅' : '❌'}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {s.level5.complete ? '✅' : '❌'}
-                </td>
+                <td className="px-4 py-3 text-center">{s.level1.complete ? '✅' : '❌'}</td>
+                <td className="px-4 py-3 text-center">{s.level21.complete ? '✅' : '❌'}</td>
+                <td className="px-4 py-3 text-center">{s.level22.complete ? '✅' : '❌'}</td>
+                <td className="px-4 py-3 text-center">{s.level5.complete ? '✅' : '❌'}</td>
                 <td className="px-4 py-3 text-center">
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                     s.allComplete
@@ -146,6 +164,14 @@ export default function AdminPage({ user }) {
                   }`}>
                     {s.allComplete ? 'Complete' : 'Incomplete'}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <button
+                    onClick={() => handleDelete(s)}
+                    disabled={deleting === s.id}
+                    className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50">
+                    {deleting === s.id ? 'Deleting...' : 'Delete'}
+                  </button>
                 </td>
               </tr>
             ))}
