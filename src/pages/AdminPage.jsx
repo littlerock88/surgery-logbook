@@ -7,9 +7,10 @@ const ADMIN_EMAILS = import.meta.env.VITE_ADMIN_EMAILS?.split(',') || []
 
 export default function AdminPage({ user }) {
   const [students, setStudents] = useState([])
-  const [catalog, setCatalog] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('name')
+  const [sortDir, setSortDir] = useState('asc')
   const [deleting, setDeleting] = useState(null)
 
   useEffect(() => {
@@ -25,8 +26,6 @@ export default function AdminPage({ user }) {
     ])
 
     const catalog = catalogSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-    setCatalog(catalog)
-
     const logs = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
 
     const studentList = profilesSnap.docs.map(d => {
@@ -36,7 +35,6 @@ export default function AdminPage({ user }) {
       return { ...profile, ...score, totalLogs: studentLogs.length }
     })
 
-    studentList.sort((a, b) => a.fullName?.localeCompare(b.fullName, 'th'))
     setStudents(studentList)
     setLoading(false)
   }
@@ -65,12 +63,22 @@ export default function AdminPage({ user }) {
     setDeleting(null)
   }
 
+  function toggleSort(field) {
+    if (sortBy === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setSortDir('asc')
+    }
+  }
+
+  function SortIcon({ field }) {
+    if (sortBy !== field) return <span className="text-gray-300 ml-1">↕</span>
+    return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
+
   if (!ADMIN_EMAILS.includes(user.email)) {
-    return (
-      <div className="p-8 text-center text-red-500 text-sm">
-        Access denied. Admin only.
-      </div>
-    )
+    return <div className="p-8 text-center text-red-500 text-sm">Access denied. Admin only.</div>
   }
 
   if (loading) return (
@@ -82,6 +90,25 @@ export default function AdminPage({ user }) {
     : filter === 'complete'
     ? students.filter(s => s.allComplete)
     : students
+
+  const sorted = [...filtered].sort((a, b) => {
+    let valA, valB
+    if (sortBy === 'name') {
+      valA = a.fullName || ''
+      valB = b.fullName || ''
+      const cmp = valA.localeCompare(valB, 'th')
+      return sortDir === 'asc' ? cmp : -cmp
+    } else if (sortBy === 'studentId') {
+      valA = a.studentId || ''
+      valB = b.studentId || ''
+      return sortDir === 'asc'
+        ? valA.localeCompare(valB)
+        : valB.localeCompare(valA)
+    } else if (sortBy === 'score') {
+      return sortDir === 'asc' ? a.score - b.score : b.score - a.score
+    }
+    return 0
+  })
 
   const totalComplete = students.filter(s => s.allComplete).length
   const totalIncomplete = students.filter(s => !s.allComplete).length
@@ -127,9 +154,18 @@ export default function AdminPage({ user }) {
           <thead className="bg-gray-50 text-gray-500 text-xs">
             <tr>
               <th className="text-left px-4 py-3 font-medium">#</th>
-              <th className="text-left px-4 py-3 font-medium">Name</th>
-              <th className="text-left px-4 py-3 font-medium">Student ID</th>
-              <th className="text-center px-4 py-3 font-medium">Score</th>
+              <th className="text-left px-4 py-3 font-medium cursor-pointer hover:text-gray-800"
+                onClick={() => toggleSort('name')}>
+                Name <SortIcon field="name" />
+              </th>
+              <th className="text-left px-4 py-3 font-medium cursor-pointer hover:text-gray-800"
+                onClick={() => toggleSort('studentId')}>
+                Student ID <SortIcon field="studentId" />
+              </th>
+              <th className="text-center px-4 py-3 font-medium cursor-pointer hover:text-gray-800"
+                onClick={() => toggleSort('score')}>
+                Score <SortIcon field="score" />
+              </th>
               <th className="text-center px-4 py-3 font-medium">L1</th>
               <th className="text-center px-4 py-3 font-medium">L2.1</th>
               <th className="text-center px-4 py-3 font-medium">L2.2</th>
@@ -139,7 +175,7 @@ export default function AdminPage({ user }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((s, i) => (
+            {sorted.map((s, i) => (
               <tr key={s.id} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-3 text-gray-400">{i + 1}</td>
                 <td className="px-4 py-3 text-gray-800 font-medium">{s.fullName}</td>
@@ -178,7 +214,7 @@ export default function AdminPage({ user }) {
           </tbody>
         </table>
 
-        {filtered.length === 0 && (
+        {sorted.length === 0 && (
           <div className="text-center text-gray-400 text-sm py-8">
             No students found.
           </div>
