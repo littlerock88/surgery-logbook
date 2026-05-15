@@ -3,6 +3,7 @@ import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/fire
 import { db } from '../lib/firebase'
 import { calculateScore } from '../utils/scoreCalculator'
 import { useNavigate } from 'react-router-dom'
+import * as XLSX from 'xlsx'
 
 export default function AdminPage({ user }) {
   const [students, setStudents] = useState([])
@@ -71,6 +72,25 @@ export default function AdminPage({ user }) {
     }
   }
 
+  function exportExcel() {
+    const data = students.map((s, i) => ({
+      'ลำดับ': i + 1,
+     'ชื่อ-นามสกุล': s.fullName,
+     'Student ID': s.studentId,
+     'คะแนนรวม': s.score,
+     'L1': s.level1.complete ? 'ครบ' : 'ไม่ครบ',
+     'L2.1': s.level21.complete ? 'ครบ' : 'ไม่ครบ',
+     'L2.2': s.level22.complete ? 'ครบ' : 'ไม่ครบ',
+     'L5': s.level5.complete ? 'ครบ' : 'ไม่ครบ',
+     'สถานะ': s.allComplete ? 'ครบ' : 'ไม่ครบ',
+    }))
+
+  const ws = XLSX.utils.json_to_sheet(data)
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Students')
+  XLSX.writeFile(wb, 'surgery-logbook-students.xlsx')
+}
+
   function SortIcon({ field }) {
     if (sortBy !== field) return <span className="text-gray-300 ml-1">↕</span>
     return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
@@ -105,7 +125,13 @@ export default function AdminPage({ user }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Admin — Student Overview</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">Admin — Student Overview</h2>
+        <button onClick={exportExcel}
+          className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition">
+          Export Excel
+        </button>
+    </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-2xl shadow-sm p-4 text-center">
