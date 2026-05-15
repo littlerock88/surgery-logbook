@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, getDocs, addDoc, serverTimestamp, orderBy, query } from 'firebase/firestore'
 import { db } from '../lib/firebase'
+import SignatureCanvas from 'react-signature-canvas'
 
 const LOCATIONS = [
   'Maharaj Nakorn Chiang Mai Hospital',
@@ -31,6 +32,7 @@ export default function LogbookPage({ user }) {
     supervisorName: '',
     notes: '',
   })
+  const sigRef = useRef(null)
 
   useEffect(() => {
     getDocs(query(collection(db, 'procedure_catalog'), orderBy('level')))
@@ -42,16 +44,24 @@ export default function LogbookPage({ user }) {
   const selectedProcedure = catalog.find(p => p.id === form.procedureId)
   const isLevel5 = selectedProcedure?.level === '5'
 
+  function clearSignature() {
+    sigRef.current?.clear()
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+
     if (!form.procedureId) return setError('Please select a procedure.')
     if (isLevel5 && !form.procedureDetail.trim()) return setError('Please describe the procedure.')
     if (!form.supervisorName.trim()) return setError('Please enter supervisor name.')
     if (new Date(form.performedDate) > new Date()) return setError('Date cannot be in the future.')
+    if (!sigRef.current || sigRef.current.isEmpty()) return setError('Please get supervisor signature.')
 
     setSaving(true)
     try {
+      const signatureData = sigRef.current.toDataURL('image/png')
+
       await addDoc(collection(db, 'procedure_logs'), {
         studentId: user.uid,
         procedureId: form.procedureId,
@@ -60,6 +70,7 @@ export default function LogbookPage({ user }) {
         location: form.location,
         studentRole: form.studentRole,
         supervisorName: form.supervisorName.trim(),
+        supervisorSignature: signatureData,
         notes: form.notes.trim(),
         createdAt: serverTimestamp(),
       })
@@ -84,9 +95,7 @@ export default function LogbookPage({ user }) {
       <form onSubmit={handleSubmit} className="space-y-5 bg-white rounded-2xl shadow-sm p-6">
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Procedure
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Procedure</label>
           <select required value={form.procedureId} onChange={set('procedureId')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             <option value="">-- Select procedure --</option>
@@ -102,9 +111,7 @@ export default function LogbookPage({ user }) {
 
         {isLevel5 && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Operation name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Operation name</label>
             <input type="text"
               value={form.procedureDetail}
               onChange={set('procedureDetail')}
@@ -114,9 +121,7 @@ export default function LogbookPage({ user }) {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date performed
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Date performed</label>
           <input type="date" required
             value={form.performedDate}
             max={new Date().toISOString().slice(0, 10)}
@@ -133,9 +138,7 @@ export default function LogbookPage({ user }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Your role
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Your role</label>
           <select required value={form.studentRole} onChange={set('studentRole')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
@@ -143,9 +146,7 @@ export default function LogbookPage({ user }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Supervisor name
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Supervisor name</label>
           <input type="text" required
             value={form.supervisorName}
             onChange={set('supervisorName')}
@@ -160,6 +161,31 @@ export default function LogbookPage({ user }) {
             onChange={set('notes')}
             placeholder="Additional details, findings, etc."
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none" />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Supervisor signature
+            </label>
+            <button type="button" onClick={clearSignature}
+              className="text-xs text-gray-400 hover:text-red-500 transition">
+              Clear
+            </button>
+          </div>
+          <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+            <SignatureCanvas
+              ref={sigRef}
+              penColor="black"
+              canvasProps={{
+                width: 500,
+                height: 150,
+                className: 'w-full',
+                style: { touchAction: 'none' }
+              }}
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1">ให้ผู้ควบคุมเซ็นชื่อในกรอบด้านบน</p>
         </div>
 
         {error && (

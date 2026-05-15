@@ -87,6 +87,13 @@ export default function HistoryPage({ user }) {
                     Notes: {log.notes}
                   </p>
                 )}
+                {log.supervisorSignature && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-1">Supervisor signature:</p>
+                    <img src={log.supervisorSignature} alt="signature"
+                      className="h-12 border border-gray-100 rounded bg-white" />
+                  </div>
+                )}
               </div>
             </div>
           )
