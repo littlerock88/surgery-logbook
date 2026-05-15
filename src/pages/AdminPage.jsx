@@ -12,7 +12,6 @@ export default function AdminPage({ user }) {
   const [deleting, setDeleting] = useState(null)
 
   useEffect(() => {
-    if (!ADMIN_EMAILS.includes(user.email)) return
     loadData()
   }, [user])
 
@@ -39,7 +38,7 @@ export default function AdminPage({ user }) {
 
   async function handleDelete(student) {
     const confirm = window.confirm(
-      `ลบ ${student.fullName} (${student.studentId}) ออกจากระบบ?\n\nข้อมูลทั้งหมดจะถูกลบถาวร`
+      'ลบ ' + student.fullName + ' (' + student.studentId + ') ออกจากระบบ?\n\nข้อมูลทั้งหมดจะถูกลบถาวร'
     )
     if (!confirm) return
 
@@ -74,8 +73,6 @@ export default function AdminPage({ user }) {
     if (sortBy !== field) return <span className="text-gray-300 ml-1">↕</span>
     return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
-  if (!user) return <div className="p-8 text-center text-red-500 text-sm">Access denied.</div>
-  }
 
   if (loading) return (
     <div className="p-8 text-center text-gray-400 text-sm">Loading...</div>
@@ -88,18 +85,13 @@ export default function AdminPage({ user }) {
     : students
 
   const sorted = [...filtered].sort((a, b) => {
-    let valA, valB
     if (sortBy === 'name') {
-      valA = a.fullName || ''
-      valB = b.fullName || ''
-      const cmp = valA.localeCompare(valB, 'th')
+      const cmp = (a.fullName || '').localeCompare(b.fullName || '', 'th')
       return sortDir === 'asc' ? cmp : -cmp
     } else if (sortBy === 'studentId') {
-      valA = a.studentId || ''
-      valB = b.studentId || ''
       return sortDir === 'asc'
-        ? valA.localeCompare(valB)
-        : valB.localeCompare(valA)
+        ? (a.studentId || '').localeCompare(b.studentId || '')
+        : (b.studentId || '').localeCompare(a.studentId || '')
     } else if (sortBy === 'score') {
       return sortDir === 'asc' ? a.score - b.score : b.score - a.score
     }
@@ -135,11 +127,11 @@ export default function AdminPage({ user }) {
           { value: 'complete', label: 'Complete only' },
         ].map(f => (
           <button key={f.value} onClick={() => setFilter(f.value)}
-            className={`text-sm px-4 py-1.5 rounded-full border transition ${
+            className={'text-sm px-4 py-1.5 rounded-full border transition ' + (
               filter === f.value
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'text-gray-500 border-gray-300 hover:border-gray-400'
-            }`}>
+            )}>
             {f.label}
           </button>
         ))}
@@ -177,10 +169,10 @@ export default function AdminPage({ user }) {
                 <td className="px-4 py-3 text-gray-800 font-medium">{s.fullName}</td>
                 <td className="px-4 py-3 text-gray-500">{s.studentId}</td>
                 <td className="px-4 py-3 text-center">
-                  <span className={`font-bold ${
+                  <span className={'font-bold ' + (
                     s.score === 10 ? 'text-green-600' :
                     s.score === 5 ? 'text-yellow-500' : 'text-red-500'
-                  }`}>
+                  )}>
                     {s.score}/10
                   </span>
                 </td>
@@ -189,11 +181,11 @@ export default function AdminPage({ user }) {
                 <td className="px-4 py-3 text-center">{s.level22.complete ? '✅' : '❌'}</td>
                 <td className="px-4 py-3 text-center">{s.level5.complete ? '✅' : '❌'}</td>
                 <td className="px-4 py-3 text-center">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  <span className={'text-xs px-2 py-1 rounded-full font-medium ' + (
                     s.allComplete
                       ? 'bg-green-100 text-green-700'
                       : 'bg-red-100 text-red-600'
-                  }`}>
+                  )}>
                     {s.allComplete ? 'Complete' : 'Incomplete'}
                   </span>
                 </td>
