@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, getDocs, addDoc, serverTimestamp, orderBy, query } from 'firebase/firestore'
 import { db } from '../lib/firebase'
@@ -26,11 +26,32 @@ export default function LogbookPage({ user }) {
     notes: '',
   })
   const sigRef = useRef(null)
+  const containerRef = useRef(null)
+
+  const resizeCanvas = useCallback(() => {
+    if (!sigRef.current || !containerRef.current) return
+    const canvas = sigRef.current.getCanvas()
+    const ratio = Math.max(window.devicePixelRatio || 1, 1)
+    const width = containerRef.current.offsetWidth
+    const data = sigRef.current.isEmpty() ? null : sigRef.current.toDataURL()
+    canvas.width = width * ratio
+    canvas.height = 150 * ratio
+    canvas.style.width = width + 'px'
+    canvas.style.height = '150px'
+    canvas.getContext('2d').scale(ratio, ratio)
+    if (data) sigRef.current.fromDataURL(data)
+  }, [])
 
   useEffect(() => {
     getDocs(query(collection(db, 'procedure_catalog'), orderBy('level')))
       .then(snap => setCatalog(snap.docs.map(d => ({ id: d.id, ...d.data() }))))
   }, [])
+
+  useEffect(() => {
+    resizeCanvas()
+    window.addEventListener('resize', resizeCanvas)
+    return () => window.removeEventListener('resize', resizeCanvas)
+  }, [resizeCanvas])
 
   const set = field => e => setForm(f => ({ ...f, [field]: e.target.value }))
 
@@ -158,15 +179,14 @@ export default function LogbookPage({ user }) {
               Clear
             </button>
           </div>
-          <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
+          <div ref={containerRef}
+            className="border border-gray-300 rounded-lg overflow-hidden bg-gray-50">
             <SignatureCanvas
               ref={sigRef}
               penColor="black"
               canvasProps={{
-                width: 500,
-                height: 150,
                 className: 'w-full',
-                style: { touchAction: 'none' }
+                style: { touchAction: 'none', height: '150px' }
               }}
             />
           </div>
