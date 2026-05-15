@@ -11,6 +11,7 @@ import HistoryPage from './pages/HistoryPage'
 import ExportPage from './pages/ExportPage'
 import AdminPage from './pages/AdminPage'
 import Navbar from './components/Navbar'
+import StudentDetailPage from './pages/StudentDetailPage'
 
 function AppRoutes({ user }) {
   const { isAdmin, loadingAdmin } = useAdmin(user)
@@ -33,6 +34,7 @@ function AppRoutes({ user }) {
         <Route path="/history"  element={user && !isAdmin ? <HistoryPage   user={user} /> : <Navigate to="/" />} />
         <Route path="/export"   element={user && !isAdmin ? <ExportPage    user={user} /> : <Navigate to="/" />} />
         <Route path="/admin"    element={user && isAdmin  ? <AdminPage     user={user} /> : <Navigate to="/" />} />
+        <Route path="/admin/student/:studentId" element={user && isAdmin ? <StudentDetailPage /> : <Navigate to="/" />} />
       </Routes>
     </>
   )

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { collection, getDocs, deleteDoc, doc, query, where } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { calculateScore } from '../utils/scoreCalculator'
+import { useNavigate } from 'react-router-dom'
 
 export default function AdminPage({ user }) {
   const [students, setStudents] = useState([])
@@ -10,6 +11,7 @@ export default function AdminPage({ user }) {
   const [sortBy, setSortBy] = useState('name')
   const [sortDir, setSortDir] = useState('asc')
   const [deleting, setDeleting] = useState(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadData()
@@ -166,7 +168,12 @@ export default function AdminPage({ user }) {
             {sorted.map((s, i) => (
               <tr key={s.id} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-3 text-gray-400">{i + 1}</td>
-                <td className="px-4 py-3 text-gray-800 font-medium">{s.fullName}</td>
+                <td className="px-4 py-3">
+                  <button onClick={() => navigate('/admin/student/' + s.id)}
+                    className="text-gray-800 font-medium hover:text-blue-600 hover:underline text-sm text-left">
+                    {s.fullName}
+                  </button>
+                </td>
                 <td className="px-4 py-3 text-gray-500">{s.studentId}</td>
                 <td className="px-4 py-3 text-center">
                   <span className={'font-bold ' + (
