@@ -4,7 +4,6 @@ import { auth } from '../lib/firebase'
 
 const studentLinks = [
   { to: '/',        label: 'Dashboard' },
-  { to: '/log',     label: 'Log'       },
   { to: '/history', label: 'History'   },
   { to: '/export',  label: 'Export'    },
 ]
