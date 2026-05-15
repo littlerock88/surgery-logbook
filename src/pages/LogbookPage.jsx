@@ -10,12 +10,6 @@ const LOCATIONS = [
   'Other',
 ]
 
-const ROLES = [
-  { value: 'performed', label: 'Performed independently' },
-  { value: 'assisted', label: 'Assisted / under supervision' },
-  { value: 'observed', label: 'Observed' },
-]
-
 const LEVEL_ORDER = ['1', '2.1', '2.2', '3', '5']
 
 export default function LogbookPage({ user }) {
@@ -28,7 +22,6 @@ export default function LogbookPage({ user }) {
     procedureDetail: '',
     performedDate: new Date().toISOString().slice(0, 10),
     location: LOCATIONS[0],
-    studentRole: 'performed',
     supervisorName: '',
     notes: '',
   })
@@ -68,7 +61,7 @@ export default function LogbookPage({ user }) {
         procedureDetail: isLevel5 ? form.procedureDetail.trim() : null,
         performedDate: form.performedDate,
         location: form.location,
-        studentRole: form.studentRole,
+        studentRole: 'assisted',
         supervisorName: form.supervisorName.trim(),
         supervisorSignature: signatureData,
         notes: form.notes.trim(),
@@ -134,14 +127,6 @@ export default function LogbookPage({ user }) {
           <select value={form.location} onChange={set('location')}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
             {LOCATIONS.map(l => <option key={l}>{l}</option>)}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Your role</label>
-          <select required value={form.studentRole} onChange={set('studentRole')}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-            {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
           </select>
         </div>
 
