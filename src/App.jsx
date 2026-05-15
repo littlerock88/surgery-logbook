@@ -27,7 +27,8 @@ function AppRoutes({ user }) {
       <Routes>
         <Route path="/login"    element={!user ? <LoginPage /> : <Navigate to="/" />} />
         <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/" />} />
-        <Route path="/"         element={user ? (isAdmin ? <Navigate to="/admin" /> : <DashboardPage user={user} />) : <Navigate to="/login" />} />
+        <Route path="/"          element={user ? (isAdmin ? <Navigate to="/admin" /> : <DashboardPage user={user} />) : <Navigate to="/login" />} />
+        <Route path="/dashboard" element={user ? <DashboardPage user={user} /> : <Navigate to="/login" />} />
         <Route path="/log"      element={user && !isAdmin ? <LogbookPage   user={user} /> : <Navigate to="/" />} />
         <Route path="/history"  element={user && !isAdmin ? <HistoryPage   user={user} /> : <Navigate to="/" />} />
         <Route path="/export"   element={user && !isAdmin ? <ExportPage    user={user} /> : <Navigate to="/" />} />
