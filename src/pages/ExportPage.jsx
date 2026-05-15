@@ -102,7 +102,7 @@ export default function ExportPage({ user }) {
               </thead>
               <tbody>
                 {section.data.map((log, i) => (
-                  <tr key={log.id} className="border-t border-gray-100">
+                  <tr key={log.id} className="border-t border-gray-100 align-top">
                     <td className="py-1.5 text-gray-400">{i + 1}</td>
                     <td className="py-1.5 text-gray-700">
                       {catalog[log.procedureId]?.name}

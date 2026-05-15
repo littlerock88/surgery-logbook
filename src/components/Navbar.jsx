@@ -18,19 +18,41 @@ export default function Navbar({ user, isAdmin }) {
   const links = isAdmin ? adminLinks : studentLinks
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-      <span className="font-semibold text-gray-800 text-sm">Surgery Logbook</span>
-      <div className="flex items-center gap-4">
-        {links.map(l => (
-          <Link key={l.to} to={l.to}
-            className={`text-sm ${pathname === l.to ? 'text-blue-600 font-medium' : 'text-gray-500 hover:text-gray-800'}`}>
-            {l.label}
-          </Link>
-        ))}
-        <button onClick={() => signOut(auth)}
-          className="text-sm text-gray-400 hover:text-red-500 transition">
-          Sign out
-        </button>
+    <nav className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
+      <div className="max-w-5xl mx-auto px-4">
+        <div className="flex items-center justify-between h-14">
+
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 12h6M12 9v6M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>
+              </svg>
+            </div>
+            <span className="font-bold text-gray-800 text-sm tracking-tight hidden sm:block">Surgery Logbook</span>
+            <span className="font-bold text-gray-800 text-sm tracking-tight sm:hidden">Logbook</span>
+          </div>
+
+          {/* Links */}
+          <div className="flex items-center gap-0.5">
+            {links.map(l => (
+              <Link key={l.to} to={l.to}
+                className={`px-2.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition ${
+                  pathname === l.to
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                }`}>
+                {l.label}
+              </Link>
+            ))}
+            <div className="w-px h-4 bg-gray-200 mx-1" />
+            <button onClick={() => signOut(auth)}
+              className="px-2.5 py-1.5 rounded-lg text-xs sm:text-sm text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+              Sign out
+            </button>
+          </div>
+
+        </div>
       </div>
     </nav>
   )
