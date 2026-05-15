@@ -1,4 +1,5 @@
 import RegisterPage from './pages/RegisterPage'
+import AdminPage from './pages/AdminPage'
 import ExportPage from './pages/ExportPage'
 import HistoryPage from './pages/HistoryPage'
 import { useEffect, useState } from 'react'
@@ -30,7 +31,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      {user && <Navbar />}
+      {user && <Navbar user={user} />}
       <Routes>
         <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" />} />
         <Route path="/" element={user ? <DashboardPage user={user} /> : <Navigate to="/login" />} />
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/history" element={user ? <HistoryPage user={user} /> : <Navigate to="/login" />} />      
         <Route path="/export" element={user ? <ExportPage user={user} /> : <Navigate to="/login" />} />
         <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/" />} />
+        <Route path="/admin" element={user ? <AdminPage user={user} /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   )
