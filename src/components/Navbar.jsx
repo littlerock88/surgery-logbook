@@ -24,11 +24,7 @@ export default function Navbar({ user, isAdmin }) {
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 12h6M12 9v6M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>
-              </svg>
-            </div>
+            <img src="/logo.jpg" alt="logo" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
             <span className="font-bold text-gray-800 text-sm tracking-tight hidden sm:block">Surgery Logbook</span>
             <span className="font-bold text-gray-800 text-sm tracking-tight sm:hidden">Logbook</span>
           </div>
