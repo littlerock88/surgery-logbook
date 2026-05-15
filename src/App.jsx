@@ -29,7 +29,7 @@ function AppRoutes({ user }) {
         <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/" />} />
         <Route path="/"          element={user ? (isAdmin ? <Navigate to="/admin" /> : <DashboardPage user={user} />) : <Navigate to="/login" />} />
         <Route path="/dashboard" element={user ? <DashboardPage user={user} /> : <Navigate to="/login" />} />
-        <Route path="/log"      element={user && !isAdmin ? <LogbookPage   user={user} /> : <Navigate to="/" />} />
+        <Route path="/log" element={user ? <LogbookPage user={user} /> : <Navigate to="/login" />} />
         <Route path="/history"  element={user && !isAdmin ? <HistoryPage   user={user} /> : <Navigate to="/" />} />
         <Route path="/export"   element={user && !isAdmin ? <ExportPage    user={user} /> : <Navigate to="/" />} />
         <Route path="/admin"    element={user && isAdmin  ? <AdminPage     user={user} /> : <Navigate to="/" />} />
