@@ -24,7 +24,7 @@ export default function Navbar({ user, isAdmin }) {
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <img src="/logo.jpg" alt="logo" className="w-10 h-10 rounded-lg object-contain flex-shrink-0" />
+            <img src="/logo.jpg" alt="logo" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
             <span className="font-bold text-gray-800 text-sm tracking-tight hidden sm:block">Surgery Logbook</span>
             <span className="font-bold text-gray-800 text-sm tracking-tight sm:hidden">Logbook</span>
           </div>
