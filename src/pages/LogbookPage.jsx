@@ -74,7 +74,7 @@ export default function LogbookPage({ user }) {
 
     setSaving(true)
     try {
-      const signatureData = sigRef.current.toDataURL('image/png')
+      const signatureData = sigRef.current.toDataURL('image/jpg',0.3)
 
       await addDoc(collection(db, 'procedure_logs'), {
         studentId: user.uid,
