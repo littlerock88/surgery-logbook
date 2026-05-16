@@ -4,19 +4,57 @@ import { db } from '../lib/firebase'
 import { calculateScore } from '../utils/scoreCalculator'
 import { Link } from 'react-router-dom'
 
-function ProgressRow({ label, done, required, complete }) {
-  const pct = required > 0 ? Math.min((done / required) * 100, 100) : 100
+function LevelSection({ title, description, required, procedures, logs }) {
+  const totalDone = procedures.reduce((sum, proc) => {
+    return sum + logs.filter(l => l.procedureId === proc.id).length
+  }, 0)
+  const totalRequired = procedures.reduce((sum, proc) => sum + (proc.requiredCount || 0), 0)
+  const allComplete = procedures.every(proc => {
+    const count = logs.filter(l => l.procedureId === proc.id).length
+    return proc.requiredCount === 0 || count >= proc.requiredCount
+  })
+
   return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-600 text-xs">{label}</span>
-        <span className={`text-xs font-medium ${complete ? 'text-green-600' : 'text-gray-400'}`}>
-          {complete ? '✓ Done' : `${done}/${required}`}
-        </span>
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className={`px-5 py-3 flex items-center justify-between ${allComplete ? 'bg-green-50' : 'bg-gray-50'}`}>
+        <div>
+          <p className="text-sm font-semibold text-gray-800">{title}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+        </div>
+        {required && (
+          <span className={`text-sm font-bold ${allComplete ? 'text-green-600' : 'text-gray-500'}`}>
+            {allComplete ? '✓ ครบ' : `${totalDone}/${totalRequired}`}
+          </span>
+        )}
+        {!required && (
+          <span className="text-xs text-gray-400">{totalDone} ครั้ง</span>
+        )}
       </div>
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-500 ${complete ? 'bg-green-500' : 'bg-blue-500'}`}
-          style={{ width: `${pct}%` }} />
+      <div className="divide-y divide-gray-50">
+        {procedures.map(proc => {
+          const count = logs.filter(l => l.procedureId === proc.id).length
+          const done = proc.requiredCount === 0 || count >= proc.requiredCount
+          return (
+            <div key={proc.id} className="px-5 py-2.5 flex items-center justify-between">
+              <p className="text-xs text-gray-700 flex-1 pr-4">{proc.name}</p>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {proc.requiredCount > 0 ? (
+                  <>
+                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${done ? 'bg-green-500' : 'bg-blue-500'}`}
+                        style={{ width: `${Math.min((count / proc.requiredCount) * 100, 100)}%` }} />
+                    </div>
+                    <span className={`text-xs font-medium w-8 text-right ${done ? 'text-green-600' : 'text-gray-400'}`}>
+                      {count}/{proc.requiredCount}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-gray-400">{count > 0 ? `${count} ครั้ง` : 'optional'}</span>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -24,6 +62,8 @@ function ProgressRow({ label, done, required, complete }) {
 
 export default function DashboardPage({ user }) {
   const [result, setResult] = useState(null)
+  const [logs, setLogs] = useState([])
+  const [catalog, setCatalog] = useState([])
 
   useEffect(() => {
     async function load() {
@@ -34,9 +74,11 @@ export default function DashboardPage({ user }) {
         )),
         getDocs(collection(db, 'procedure_catalog')),
       ])
-      const logs    = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-      const catalog = catalogSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-      setResult(calculateScore(logs, catalog))
+      const logsData = logsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const catalogData = catalogSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      setLogs(logsData)
+      setCatalog(catalogData)
+      setResult(calculateScore(logsData, catalogData))
     }
     load()
   }, [user])
@@ -45,7 +87,11 @@ export default function DashboardPage({ user }) {
     <div className="p-8 text-center text-gray-400 text-sm">Loading...</div>
   )
 
-  const scoreColor = result.score === 10 ? 'text-green-400' : result.score === 5 ? 'text-yellow-300' : 'text-red-300'
+  const level1 = catalog.filter(p => p.level === '1')
+  const level21 = catalog.filter(p => p.level === '2.1')
+  const level22 = catalog.filter(p => p.level === '2.2')
+  const level3 = catalog.filter(p => p.level === '3')
+  const level5 = catalog.filter(p => p.level === '5')
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
@@ -76,18 +122,90 @@ export default function DashboardPage({ user }) {
         </Link>
       </div>
 
-      {/* Progress */}
-      <div className="bg-white rounded-2xl shadow-sm p-5 space-y-4">
-        <h3 className="text-sm font-medium text-gray-700">Progress by level</h3>
-        {result.level1.detail.map(p => (
-          <ProgressRow key={p.id} label={'L1: ' + p.name} done={p.count} required={2} complete={p.done} />
-        ))}
-        {result.level21.detail.map(p => (
-          <ProgressRow key={p.id} label={'L2.1: ' + p.name} done={p.count} required={1} complete={p.done} />
-        ))}
-        <ProgressRow label="L2.2: Appendectomy or Needle biopsy (need 1)" done={result.level22.done} required={1} complete={result.level22.complete} />
-        <ProgressRow label="L5: Major OR (need 4 cases)" done={result.level5.count} required={4} complete={result.level5.complete} />
+      {/* Level 1 */}
+      <LevelSection
+        title="ระดับ 1"
+        description="ต้องทำด้วยตนเอง — บันทึกอย่างน้อยหัตถการละ 2 ครั้ง"
+        required={true}
+        procedures={level1}
+        logs={logs}
+      />
+
+      {/* Level 2 */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className={`px-5 py-3 ${result.level21.complete && result.level22.complete ? 'bg-green-50' : 'bg-gray-50'}`}>
+          <p className="text-sm font-semibold text-gray-800">ระดับ 2</p>
+          <p className="text-xs text-gray-500 mt-0.5">ภายใต้การกำกับดูแลหรือช่วยทำ — บันทึกอย่างน้อย 1 ครั้ง</p>
+        </div>
+
+        {/* Level 2.1 */}
+        <div className="px-5 pt-3 pb-1">
+          <p className="text-xs font-medium text-gray-500 mb-1">2.1 — ต้องครบทุกหัตถการ</p>
+        </div>
+        <div className="divide-y divide-gray-50">
+          {level21.map(proc => {
+            const count = logs.filter(l => l.procedureId === proc.id).length
+            const done = count >= 1
+            return (
+              <div key={proc.id} className="px-5 py-2.5 flex items-center justify-between">
+                <p className="text-xs text-gray-700 flex-1 pr-4">{proc.name}</p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${done ? 'bg-green-500' : 'bg-blue-500'}`}
+                      style={{ width: `${Math.min(count * 100, 100)}%` }} />
+                  </div>
+                  <span className={`text-xs font-medium w-8 text-right ${done ? 'text-green-600' : 'text-gray-400'}`}>
+                    {count}/1
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Level 2.2 */}
+        <div className="px-5 pt-3 pb-1 border-t border-gray-100">
+          <p className="text-xs font-medium text-gray-500 mb-1">2.2 — ต้องอย่างน้อย 1 จาก 2 หัตถการ</p>
+        </div>
+        <div className="divide-y divide-gray-50">
+          {level22.map(proc => {
+            const count = logs.filter(l => l.procedureId === proc.id).length
+            const done = count >= 1
+            return (
+              <div key={proc.id} className="px-5 py-2.5 flex items-center justify-between">
+                <p className="text-xs text-gray-700 flex-1 pr-4">{proc.name}</p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${done ? 'bg-green-500' : 'bg-blue-500'}`}
+                      style={{ width: `${Math.min(count * 100, 100)}%` }} />
+                  </div>
+                  <span className={`text-xs font-medium w-8 text-right ${done ? 'text-green-600' : 'text-gray-400'}`}>
+                    {count}/1
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
+
+      {/* Level 3 */}
+      <LevelSection
+        title="ระดับ 3"
+        description="อาจเห็นหรือช่วย — บันทึกหรือไม่ก็ได้"
+        required={false}
+        procedures={level3}
+        logs={logs}
+      />
+
+      {/* Level 5 */}
+      <LevelSection
+        title="ระดับ 5"
+        description="เข้าสังเกตหรือช่วย — บันทึกอย่างน้อย 4 หัตถการ"
+        required={true}
+        procedures={level5}
+        logs={logs}
+      />
 
     </div>
   )
